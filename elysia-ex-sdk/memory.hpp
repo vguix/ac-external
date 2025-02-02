@@ -3,21 +3,36 @@
 // Memory class designed for memory edition/reading efficiently and clean.
 // No anti-cheat bypasses have been implemented yet.
 
-#pragma once
-
 #include "Windows.h"
 #include "TlHelp32.h"
+
+#ifndef MEMORY_HPP
+#define MEMORY_HPP
 
 class Mem 
 {
 	private:
 		LPCWSTR processName;
 		DWORD processId;
+		HANDLE process;
 
 	public:
-		bool write(uintptr_t address, void* buffer) 
+		bool write(uintptr_t address, void* buffer, size_t size) 
 		{
-			return WriteProcessMemory()
+			return WriteProcessMemory(process, (LPVOID)address, buffer, sizeof(address), NULL);
+		}
+
+		bool read(uintptr_t address, void* buffer, size_t size)
+		{
+			return ReadProcessMemory(process, (LPCVOID)address, buffer, sizeof(address), NULL);
+		}
+
+		bool validityCheck() {
+			return process != NULL;
+		}
+
+		DWORD getPid() {
+			return processId;
 		}
 
 		Mem(LPCWSTR processName) 
@@ -32,8 +47,17 @@ class Mem
 				while (Process32NextW(processSnap, &procEntry)) {
 					if (wcscmp(processName, procEntry.szExeFile) == 0) {
 						processId = procEntry.th32ProcessID;
+						process = OpenProcess(PROCESS_ALL_ACCESS, 0, processId);
 					}
 				}
 			}
+			CloseHandle(processSnap);
+		}
+
+		~Mem() {
+			if (process != NULL) {
+				CloseHandle(process);
+			}
 		}
 };
+#endif
