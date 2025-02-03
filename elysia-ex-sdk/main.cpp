@@ -1,37 +1,49 @@
-// CLI for external testing features.
-#include "features.hpp"
-#include "memory.hpp"
 #include <iostream>
-#include "stdlib.h"
+#include <string>
+#include <array>
+#include "memory.hpp"
+#include "entity.hpp"
+#include "features.hpp"
+#include "offsets.hpp"
 
-int userChoice() 
+Entity obtainEntityInfo(Mem& process, unsigned int index)
 {
-	int ret;
-	system("cls");
-	std::cout << "assaultcube external trainer mm yeahh" << "\n";
-	std::cout << "NUMBER TO TOGGLE | FEATURE | VALUE | STATE" << "\n";
-	std::cout << "[1] Mod Ammo" << features::ammo << features::modAmmo << "\n";
-	std::cout << "[2] Mod Health" << features::health << features::modHealth << "\n";
-	std::cout << "[3] Mod Armor" << features::armor << features::modArmor << "\n";
+    uintptr_t entityAddress;
+    std::array<float, 3> entityPos;
+    char entityNameBuffer[64];  // Adjust size as needed
+    int entityHealth;
 
-	do 
-	{
-		std::cout << "input: ";
-		std::cin >> ret;
-	}
-	while (reinterpret_cast<int>(ret) != 1 || 2 || 3);
-}
+    // Ent, Health, Name
+    process.read(entityList + (0x4 * index), &entityAddress, sizeof(entityAddress));
+    process.read(entityAddress + offsets::health, &entityHealth, sizeof(entityHealth));
+    process.read(entityAddress + offsets::name, entityNameBuffer, sizeof(entityNameBuffer));
 
-void modValue(int choice) {
-	switch(choice)
-	{
-		case 1{}
-	}
+    // Positions
+    process.read(entityAddress + offsets::posX, &entityPos[0], sizeof(float));
+    process.read(entityAddress + offsets::posY, &entityPos[1], sizeof(float));
+    process.read(entityAddress + offsets::posZ, &entityPos[2], sizeof(float));
+
+    std::string entityName(entityNameBuffer);
+    return Entity(entityName, entityHealth, entityPos);
 }
 
 int main()
 {
-	LPCWSTR targetProcess = L"";
-	std::cout << "Hello, World!";
-	return 0;
+    Mem assaultCube(L"ac_client.exe");
+    if (!assaultCube.validityCheck()) {
+        std::cerr << "Failed to open process!" << std::endl;
+        return 1;
+    }
+
+    int entCount;
+    assaultCube.read(moduleBase + offsets::entityList, &entityList, sizeof(uintptr_t));
+    assaultCube.read(moduleBase + offsets::entityCount, &entCount, sizeof(entCount));
+
+    for (int i = 0; i < entCount; ++i)  // Start from 0
+    {
+        Entity current = obtainEntityInfo(assaultCube, i);
+        current.display();
+    }
+
+    return 0;
 }

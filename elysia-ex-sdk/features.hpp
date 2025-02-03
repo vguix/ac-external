@@ -1,6 +1,6 @@
 #ifndef FEATURES_HPP
 #define FEATURES_HPP
-
+/*
 namespace features 
 {
 	bool aimbot = false;
@@ -12,5 +12,5 @@ namespace features
 	unsigned int health;
 	unsigned int armor;
 }
-
+*/
 #endif

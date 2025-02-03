@@ -132,6 +132,7 @@
     <ClInclude Include="entity.hpp" />
     <ClInclude Include="features.hpp" />
     <ClInclude Include="memory.hpp" />
+    <ClInclude Include="offsets.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
